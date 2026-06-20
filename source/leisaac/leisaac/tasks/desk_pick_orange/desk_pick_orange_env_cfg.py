@@ -35,6 +35,7 @@ OBJECT_SPAWN_MARKERS = {
     "Orange001": "Orange001SpawnMarker",
     "Orange003": "Orange003SpawnMarker",
 }
+RANDOMIZED_ORANGE_NAMES = frozenset({"Orange001", "Orange003"})
 
 FRONT_CAMERA_POS = (1.3255667074339175, 2.1554210690751097, -0.39224101265889155)
 FRONT_CAMERA_TARGET_POS = (1.421302, 3.085018, -0.845254)
@@ -674,12 +675,141 @@ def _asset_bbox_min_signed_distance_to_plane(
         return None
 
 
-def _table_surface_z(env, env_id: int, fallback_marker_name: str = "RobotSpawnMarker") -> float:
+def _tabletop_geometry(env, env_id: int) -> dict:
+    from isaacsim.core.utils.stage import get_current_stage
+    from pxr import Gf, Usd, UsdGeom
+
+    stage = get_current_stage()
+    prim_path = _runtime_prim_path(env, env_id, "Scene/DeskTabletopCollider")
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim:
+        raise RuntimeError(f"DeskTabletopCollider path missing env_{env_id}: {prim_path}")
+
+    matrix = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+    inverse_matrix = matrix.GetInverse()
+    size_attr = prim.GetAttribute("size")
+    size = float(size_attr.Get()) if size_attr and size_attr.Get() is not None else 2.0
+    half_size = size * 0.5
+    local_origin = matrix.Transform(Gf.Vec3d(0.0, 0.0, 0.0))
+    local_x_end = matrix.Transform(Gf.Vec3d(1.0, 0.0, 0.0))
+    local_y_end = matrix.Transform(Gf.Vec3d(0.0, 1.0, 0.0))
+    top_center = matrix.Transform(Gf.Vec3d(0.0, 0.0, half_size))
+    normal_end = matrix.Transform(Gf.Vec3d(0.0, 0.0, half_size + 1.0))
+    normal = normal_end - top_center
+    normal_length = float(normal.GetLength())
+    if normal_length <= 1e-8 or abs(float(normal[2])) <= 1e-8:
+        raise RuntimeError(f"DeskTabletopCollider has an invalid top-plane normal env_{env_id}")
+    normal /= normal_length
+
+    return {
+        "matrix": matrix,
+        "inverse_matrix": inverse_matrix,
+        "half_size": half_size,
+        "x_scale": float((local_x_end - local_origin).GetLength()),
+        "y_scale": float((local_y_end - local_origin).GetLength()),
+        "top_center": top_center,
+        "normal": normal,
+    }
+
+
+def _tabletop_surface_point_at_xy(geometry: dict, x: float, y: float) -> tuple[float, float, float]:
+    top_center = geometry["top_center"]
+    normal = geometry["normal"]
+    z = float(top_center[2]) - (
+        float(normal[0]) * (x - float(top_center[0]))
+        + float(normal[1]) * (y - float(top_center[1]))
+    ) / float(normal[2])
+    return (x, y, z)
+
+
+def _is_inside_tabletop(
+    geometry: dict,
+    surface_point: tuple[float, float, float],
+    edge_margin: float,
+) -> bool:
+    from pxr import Gf
+
+    local_point = geometry["inverse_matrix"].Transform(Gf.Vec3d(*surface_point))
+    x_limit = geometry["half_size"] - edge_margin / geometry["x_scale"]
+    y_limit = geometry["half_size"] - edge_margin / geometry["y_scale"]
+    if x_limit <= 0.0 or y_limit <= 0.0:
+        raise ValueError("Orange table edge margin is larger than the tabletop")
+    return abs(float(local_point[0])) <= x_limit and abs(float(local_point[1])) <= y_limit
+
+
+def _nearest_tabletop_position(
+    geometry: dict,
+    initial_position: tuple[float, float, float],
+    root_z_offset: float,
+    edge_margin: float,
+) -> tuple[float, float, float]:
+    from pxr import Gf
+
+    initial_surface_position = Gf.Vec3d(
+        initial_position[0],
+        initial_position[1],
+        initial_position[2] - root_z_offset,
+    )
+    local_point = geometry["inverse_matrix"].Transform(initial_surface_position)
+    x_limit = geometry["half_size"] - edge_margin / geometry["x_scale"]
+    y_limit = geometry["half_size"] - edge_margin / geometry["y_scale"]
+    local_x = max(-x_limit, min(x_limit, float(local_point[0])))
+    local_y = max(-y_limit, min(y_limit, float(local_point[1])))
+    surface_point = geometry["matrix"].Transform(Gf.Vec3d(local_x, local_y, geometry["half_size"]))
+    return (float(surface_point[0]), float(surface_point[1]), float(surface_point[2]) + root_z_offset)
+
+
+def _sample_random_orange_position(
+    env,
+    env_id: int,
+    initial_position: tuple[float, float, float],
+    root_z_offset: float,
+    max_distance: float,
+    edge_margin: float,
+    max_attempts: int = 128,
+) -> tuple[float, float, float]:
+    if max_distance <= 0.0:
+        raise ValueError("LEISAAC_ORANGE_RANDOM_MAX_DISTANCE must be greater than zero")
+    if edge_margin < 0.0:
+        raise ValueError("LEISAAC_ORANGE_TABLE_EDGE_MARGIN must not be negative")
+
+    geometry = _tabletop_geometry(env, env_id)
+    for _ in range(max_attempts):
+        random_values = torch.rand(2, device=env.device)
+        radius = max_distance * math.sqrt(float(random_values[0].item()))
+        angle = 2.0 * math.pi * float(random_values[1].item())
+        x = initial_position[0] + radius * math.cos(angle)
+        y = initial_position[1] + radius * math.sin(angle)
+        surface_point = _tabletop_surface_point_at_xy(geometry, x, y)
+        candidate = (surface_point[0], surface_point[1], surface_point[2] + root_z_offset)
+        if math.dist(initial_position, candidate) > max_distance + 1e-6:
+            continue
+        if _is_inside_tabletop(geometry, surface_point, edge_margin):
+            return candidate
+
+    nearest_position = _nearest_tabletop_position(geometry, initial_position, root_z_offset, edge_margin)
+    nearest_distance = math.dist(initial_position, nearest_position)
+    if nearest_distance <= max_distance + 1e-6:
+        return nearest_position
+    raise RuntimeError(
+        f"Cannot place orange on the tabletop within {max_distance:.3f} m of its initial position "
+        f"for env_{env_id}; nearest valid position is {nearest_distance:.3f} m away"
+    )
+
+
+def _table_surface_z(
+    env,
+    env_id: int,
+    fallback_marker_name: str = "RobotSpawnMarker",
+    query_xy: tuple[float, float] | None = None,
+) -> float:
     env_surface_z = os.environ.get("LEISAAC_TABLE_SURFACE_Z")
     if env_surface_z:
         return _env_float("LEISAAC_TABLE_SURFACE_Z", 0.0)
 
     query_pos = _runtime_marker_world_pos(env, env_id, fallback_marker_name)
+    if query_xy is not None:
+        query_pos = (query_xy[0], query_xy[1], query_pos[2])
     surface_source = os.environ.get("LEISAAC_TABLE_SURFACE_SOURCE", "collider").strip().lower()
     surface_marker_name = os.environ.get("LEISAAC_TABLE_SURFACE_MARKER", "").strip()
     if surface_marker_name:
@@ -688,23 +818,8 @@ def _table_surface_z(env, env_id: int, fallback_marker_name: str = "RobotSpawnMa
 
     if surface_source in {"collider", "desk_tabletop_collider"}:
         try:
-            from isaacsim.core.utils.stage import get_current_stage
-            from pxr import Gf, Usd, UsdGeom
-
-            stage = get_current_stage()
-            prim = stage.GetPrimAtPath(_runtime_prim_path(env, env_id, "Scene/DeskTabletopCollider"))
-            if prim:
-                xformable = UsdGeom.Xformable(prim)
-                matrix = xformable.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-                top_center = matrix.Transform(Gf.Vec3d(0.0, 0.0, 0.5))
-                normal_end = matrix.Transform(Gf.Vec3d(0.0, 0.0, 1.5))
-                normal = normal_end - top_center
-                if abs(float(normal[2])) > 1e-6:
-                    dz = -(
-                        float(normal[0]) * (query_pos[0] - float(top_center[0]))
-                        + float(normal[1]) * (query_pos[1] - float(top_center[1]))
-                    ) / float(normal[2])
-                    return float(top_center[2]) + dz
+            geometry = _tabletop_geometry(env, env_id)
+            return _tabletop_surface_point_at_xy(geometry, query_pos[0], query_pos[1])[2]
         except Exception as exc:
             print(f"[DEBUG] DeskTabletopCollider surface z unavailable env_{env_id}: {exc}")
 
@@ -894,6 +1009,9 @@ def reset_objects_to_spawn_markers(
     else:
         env_ids = env_ids.to(device=env.device)
 
+    orange_max_distance = _env_float("LEISAAC_ORANGE_RANDOM_MAX_DISTANCE", 0.07)
+    orange_edge_margin = _env_float("LEISAAC_ORANGE_TABLE_EDGE_MARGIN", 0.04)
+
     for object_name, marker_name in object_marker_names.items():
         asset = env.scene[object_name]
         root_pose = asset.data.default_root_state[env_ids, :7].clone()
@@ -903,21 +1021,40 @@ def reset_objects_to_spawn_markers(
         for row, env_id_tensor in enumerate(env_ids):
             env_id = int(env_id_tensor.item())
             marker_pos = _runtime_marker_world_pos(env, env_id, marker_name)
-            surface_z = _table_surface_z(env, env_id, marker_name)
+            root_z_offset = _env_float(f"LEISAAC_{object_name.upper()}_ROOT_Z_OFFSET", 0.0)
+            surface_z = _table_surface_z(env, env_id, marker_name, query_xy=marker_pos[:2])
+            initial_position = (marker_pos[0], marker_pos[1], surface_z + root_z_offset)
+            if object_name in RANDOMIZED_ORANGE_NAMES:
+                target_position = _sample_random_orange_position(
+                    env,
+                    env_id,
+                    initial_position,
+                    root_z_offset,
+                    orange_max_distance,
+                    orange_edge_margin,
+                )
+            else:
+                target_position = initial_position
+            surface_z = _table_surface_z(env, env_id, marker_name, query_xy=target_position[:2])
             surface_z_by_env[env_id] = surface_z
-            initial_pos = (marker_pos[0], marker_pos[1], surface_z + _env_float(f"LEISAAC_{object_name.upper()}_ROOT_Z_OFFSET", 0.0))
             env_origin = env.scene.env_origins[env_id].detach().cpu()
             default_pos = (
-                initial_pos[0] - float(env_origin[0]),
-                initial_pos[1] - float(env_origin[1]),
-                initial_pos[2] - float(env_origin[2]),
+                target_position[0] - float(env_origin[0]),
+                target_position[1] - float(env_origin[1]),
+                target_position[2] - float(env_origin[2]),
             )
-            root_pose[row, :3] = torch.tensor(initial_pos, device=env.device, dtype=root_pose.dtype)
+            root_pose[row, :3] = torch.tensor(target_position, device=env.device, dtype=root_pose.dtype)
             default_root_pose[row, :3] = torch.tensor(default_pos, device=env.device, dtype=default_root_pose.dtype)
             print(f"[DEBUG] {marker_name} world position env_{env_id}: {marker_pos}")
             print(f"[DEBUG] {marker_name} world pos = {marker_pos}")
             print(f"[DEBUG] table_plane_surface_z env_{env_id}: {surface_z}")
-            print(f"[DEBUG] Applying {object_name} spawn x/y from marker and horizontal z env_{env_id}: {initial_pos}")
+            if object_name in RANDOMIZED_ORANGE_NAMES:
+                print(
+                    f"[DEBUG] Randomized {object_name} env_{env_id}: initial={initial_position} "
+                    f"target={target_position} distance={math.dist(initial_position, target_position):.6f} m"
+                )
+            else:
+                print(f"[DEBUG] Applying {object_name} spawn from marker env_{env_id}: {target_position}")
 
         root_velocity = torch.zeros((len(env_ids), 6), device=env.device, dtype=root_pose.dtype)
         asset.data.default_root_state[env_ids, :7] = default_root_pose
@@ -1062,7 +1199,7 @@ class DeskPickOrangeEnvCfg(SingleArmTaskEnvCfg):
 
     terminations: TerminationsCfg = TerminationsCfg()
 
-    task_description: str = "Pick the red orange and the orange from the desk and put them into the plate, then reset the arm to rest state."
+    task_description: str = "Pick the red orange from the desk and put them into the plate"
 
     def __post_init__(self) -> None:
         super().__post_init__()

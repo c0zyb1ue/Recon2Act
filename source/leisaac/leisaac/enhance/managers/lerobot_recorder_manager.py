@@ -79,15 +79,15 @@ class LeRobotRecorderManager(RecorderManager):
                 episode_succeeded = self._episodes[env_id].success
                 target_dataset_file_handler = self._dataset_file_handler
                 if episode_succeeded:
-                    target_dataset_file_handler.flush()
-                    self._exported_successful_episode_count[env_id] = (
-                        self._exported_successful_episode_count.get(env_id, 0) + 1
-                    )
+                    if target_dataset_file_handler.flush():
+                        self._exported_successful_episode_count[env_id] = (
+                            self._exported_successful_episode_count.get(env_id, 0) + 1
+                        )
                 else:
-                    target_dataset_file_handler.clear()
-                    self._exported_failed_episode_count[env_id] = (
-                        self._exported_failed_episode_count.get(env_id, -1) + 1
-                    )  # default to -1 to handle the first reset
+                    if target_dataset_file_handler.clear():
+                        self._exported_failed_episode_count[env_id] = (
+                            self._exported_failed_episode_count.get(env_id, 0) + 1
+                        )
             # Reset the episode buffer for the given environment after export
             self._episodes[env_id] = EpisodeData()
 

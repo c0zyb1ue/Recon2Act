@@ -1,0 +1,16 @@
+lerobot-train \
+    --dataset.repo_id=seunghoney/real-orange_20260619_235723 \
+    --policy.type=pi05 \
+    --output_dir=./outputs/pi05_training_real \
+    --job_name=pi05_training \
+    --policy.repo_id=seunghoney/real-orange \
+    --policy.pretrained_path=lerobot/pi05_base \
+    --policy.compile_model=true \
+    --policy.gradient_checkpointing=true \
+    --wandb.enable=true \
+    --policy.dtype=bfloat16 \
+    --policy.freeze_vision_encoder=true \
+    --policy.train_expert_only=true \
+    --steps=3000 \
+    --policy.device=cuda \
+    --batch_size=32

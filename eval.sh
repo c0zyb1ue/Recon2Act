@@ -1,0 +1,12 @@
+python -m lerobot.record  \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.cameras="{ front: {type: opencv, index_or_path: /dev/video10, width: 640, height: 480, fps: 30}, side: {type: opencv, index_or_path: /dev/video4, width: 640, height: 480, fps: 30}}" \
+  --robot.id=meta_follower_arm \
+  --display_data=true \
+  --dataset.repo_id=seunghoney/eval_act_test \
+  --dataset.single_task="Pick the orange from the desk and put them into the plate" \
+  --policy.path=seunghoney/orange \
+  --teleop.type=so101_leader \
+  --teleop.id=meta_leader_arm \
+  --teleop.port=/dev/ttyACM1
