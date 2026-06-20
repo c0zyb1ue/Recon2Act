@@ -1,148 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Recon2Act: Digital-Twin-Based Sim-to-Real VLA Training">
   <title>Recon2Act: Digital-Twin-Based Sim-to-Real VLA Training</title>
-  <meta name="description" content="Recon2Act reconstructs a real tabletop workspace into an Isaac Sim digital twin for pi0.5 VLA fine-tuning and real-world robot deployment." />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="hero">
-    <div class="hero-inner">
-      <p class="eyebrow">Sim-to-Real · VLA · Digital Twin · LeRobot</p>
-      <h1>Recon2Act</h1>
-      <h2>Digital-Twin-Based Sim-to-Real VLA Training</h2>
-      <p class="hero-text">
-        We reconstruct a real tabletop manipulation scene into an Isaac Sim digital twin,
-        generate simulated demonstrations, fine-tune a <span class="nowrap">pi0.5</span>-based VLA policy,
-        and deploy the policy in the real workspace.
-      </p>
-      <div class="button-row">
-        <a class="button primary" href="https://github.com/c0zyb1ue/Recon2Act" target="_blank" rel="noreferrer">GitHub</a>
-        <a class="button" href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Freal-orange_20260619_235723%2Fepisode_0" target="_blank" rel="noreferrer">Real Dataset</a>
-        <a class="button" href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Forange%2Fepisode_11" target="_blank" rel="noreferrer">Sim Dataset</a>
+    <div class="container narrow">
+      <p class="venue">Sim-to-Real VLA Project</p>
+      <h1>Recon2Act: Digital-Twin-Based<br>Sim-to-Real VLA Training</h1>
+      <p class="subtitle">From real scene reconstruction to simulation-based VLA fine-tuning and real-world deployment</p>
+
+      <div class="authors">
+        <span>Seungheon Jeong</span>
+        <span>Chanwoo Lee</span>
+        <span>Jeoungwoo Yang</span>
       </div>
-      <p class="note">Built on top of the LeIsaac / LeRobot workflow for IsaacLab-based data collection, dataset conversion, and robot policy training.</p>
+      <div class="affiliation">UNIST AIGS · 3D Vision & Robotics Lab</div>
+
+      <div class="links">
+        <a href="https://github.com/c0zyb1ue/Recon2Act" target="_blank" rel="noreferrer">Code</a>
+        <a href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Freal-orange_20260619_235723%2Fepisode_0" target="_blank" rel="noreferrer">Real Dataset</a>
+        <a href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Forange%2Fepisode_11" target="_blank" rel="noreferrer">Sim Dataset</a>
+      </div>
     </div>
   </header>
 
   <main>
-    <section class="section overview">
-      <h2>Overview</h2>
-      <p>
-        Recon2Act follows a real-to-sim-to-real pipeline: capture the real scene, reconstruct and refine the 3D workspace,
-        import the digital twin into Isaac Sim, train a VLA policy in simulation, and evaluate deployment on the real robot.
-      </p>
-      <figure class="pipeline-figure">
-        <img src="assets/fig1.png" alt="Overview of the Recon2Act sim-to-real VLA training pipeline" />
-        <figcaption>Overall pipeline: scene capture → 3D reconstruction → MiLO refinement → Isaac Sim digital twin → VLA fine-tuning → real-world deployment.</figcaption>
-      </figure>
-    </section>
-
-    <section class="section steps">
-      <h2>Pipeline</h2>
-      <div class="step-grid">
-        <article class="step-card">
-          <span class="step-number">1</span>
-          <h3>Real Scene Capture</h3>
-          <p>Capture multi-view RGB images of the target tabletop workspace.</p>
-        </article>
-        <article class="step-card">
-          <span class="step-number">2</span>
-          <h3>3D Reconstruction</h3>
-          <p>Recover camera poses and point-cloud geometry using VGGT and COLMAP.</p>
-        </article>
-        <article class="step-card">
-          <span class="step-number">3</span>
-          <h3>Scene Refinement</h3>
-          <p>Use MiLO to refine the reconstruction into PLY / 3DGS and mesh assets.</p>
-        </article>
-        <article class="step-card">
-          <span class="step-number">4</span>
-          <h3>Isaac Sim Digital Twin</h3>
-          <p>Import the reconstructed scene into Isaac Sim and align the robot workspace.</p>
-        </article>
-        <article class="step-card">
-          <span class="step-number">5</span>
-          <h3>VLA Fine-tuning</h3>
-          <p>Generate simulated demonstrations and fine-tune a pi0.5-based VLA policy.</p>
-        </article>
-        <article class="step-card">
-          <span class="step-number">6</span>
-          <h3>Real Deployment</h3>
-          <p>Deploy the policy in the physical workspace and analyze transfer failures.</p>
-        </article>
+    <section class="section teaser">
+      <div class="container">
+        <img src="assets/fig1.png" alt="Overview of the Recon2Act sim-to-real VLA training pipeline" class="figure-main">
+        <p class="caption">
+          Recon2Act captures a real tabletop workspace, reconstructs it with VGGT and COLMAP, refines the scene with MiLO,
+          imports the digital twin into Isaac Sim, and fine-tunes a pi0.5-based VLA policy for real-world deployment.
+        </p>
       </div>
     </section>
 
-    <section class="section videos">
-      <h2>Dataset Videos</h2>
-      <p>
-        The policy uses front and wrist camera observations. The following videos should be placed in <code>assets/</code>.
-      </p>
-
-      <h3>Real-world dataset</h3>
-      <div class="video-grid">
-        <div class="video-card">
-          <video controls preload="metadata" src="assets/real_front.mp4"></video>
-          <p>Real front camera</p>
-        </div>
-        <div class="video-card">
-          <video controls preload="metadata" src="assets/real_wrist.mp4"></video>
-          <p>Real wrist camera</p>
-        </div>
+    <section class="section">
+      <div class="container narrow">
+        <h2>Abstract</h2>
+        <p>
+          Vision-language-action (VLA) models are promising for general-purpose robot manipulation, but adapting them to a
+          specific real-world workspace remains difficult due to the cost of real demonstration collection and the persistent
+          sim-to-real gap. We study a real-to-sim-to-real pipeline for fine-tuning a pi0.5-based VLA policy using a reconstructed
+          digital twin. A tabletop manipulation scene is captured from multiple viewpoints, reconstructed with VGGT and COLMAP,
+          refined with MiLO, imported into Isaac Sim, and used to generate simulated demonstrations. The resulting policy is
+          evaluated in simulation and deployed on the real robot, revealing both the potential of digital-twin-based VLA training
+          and the remaining challenges in real-world transfer.
+        </p>
       </div>
+    </section>
 
-      <h3>Simulation dataset</h3>
-      <div class="video-grid">
-        <div class="video-card">
-          <video controls preload="metadata" src="assets/sim_front.mp4"></video>
-          <p>Simulation front camera</p>
-        </div>
-        <div class="video-card">
-          <video controls preload="metadata" src="assets/sim_wrist.mp4"></video>
-          <p>Simulation wrist camera</p>
+    <section class="section alt">
+      <div class="container">
+        <h2>Pipeline</h2>
+        <div class="pipeline-grid">
+          <div class="card"><span>1</span><h3>Capture</h3><p>Multi-view RGB images of the real workspace.</p></div>
+          <div class="card"><span>2</span><h3>Reconstruct</h3><p>VGGT + COLMAP for camera poses and point clouds.</p></div>
+          <div class="card"><span>3</span><h3>Refine</h3><p>MiLO refinement into PLY / 3DGS and mesh assets.</p></div>
+          <div class="card"><span>4</span><h3>Sim & Train</h3><p>Isaac Sim digital twin for simulated demonstrations.</p></div>
+          <div class="card"><span>5</span><h3>Deploy</h3><p>Fine-tuned VLA policy on the real robot.</p></div>
         </div>
       </div>
     </section>
 
-    <section class="section dataset-links">
-      <h2>LeRobot Dataset Visualization</h2>
-      <div class="link-cards">
-        <a class="link-card" href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Freal-orange_20260619_235723%2Fepisode_0" target="_blank" rel="noreferrer">
-          <h3>Real-world orange task</h3>
-          <p>Episode 0 · LeRobot visualizer</p>
-        </a>
-        <a class="link-card" href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Forange%2Fepisode_11" target="_blank" rel="noreferrer">
-          <h3>Simulation orange task</h3>
-          <p>Episode 11 · LeRobot visualizer</p>
-        </a>
+    <section class="section">
+      <div class="container">
+        <h2>Dataset Visualization</h2>
+        <p class="section-lead">
+          We visualize real-world and simulation demonstrations using the LeRobot dataset format. Each episode contains synchronized
+          front-camera and wrist-camera observations.
+        </p>
+
+        <div class="button-row">
+          <a href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Freal-orange_20260619_235723%2Fepisode_0" target="_blank" rel="noreferrer">Open real episode</a>
+          <a href="https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Forange%2Fepisode_11" target="_blank" rel="noreferrer">Open simulation episode</a>
+        </div>
+
+        <h3 class="subheading">Real-world episode</h3>
+        <div class="video-grid">
+          <figure>
+            <video controls muted preload="metadata" playsinline>
+              <source src="assets/real_front.mp4" type="video/mp4">
+            </video>
+            <figcaption>Front camera</figcaption>
+          </figure>
+          <figure>
+            <video controls muted preload="metadata" playsinline>
+              <source src="assets/real_wrist.mp4" type="video/mp4">
+            </video>
+            <figcaption>Wrist camera</figcaption>
+          </figure>
+        </div>
+
+        <h3 class="subheading">Simulation episode</h3>
+        <div class="video-grid">
+          <figure>
+            <video controls muted preload="metadata" playsinline>
+              <source src="assets/sim_front.mp4" type="video/mp4">
+            </video>
+            <figcaption>Front camera</figcaption>
+          </figure>
+          <figure>
+            <video controls muted preload="metadata" playsinline>
+              <source src="assets/sim_wrist.mp4" type="video/mp4">
+            </video>
+            <figcaption>Wrist camera</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
-    <section class="section observations">
-      <h2>Observations</h2>
-      <p>
-        Digital-twin-based simulation is useful for scalable VLA demonstration generation, but robust real-world deployment
-        remains difficult. We observed failure factors including residual visual and physical sim-to-real gaps, current VLA
-        capability limits, and joint-level error accumulation in the LeRobot execution pipeline.
-      </p>
+    <section class="section alt">
+      <div class="container narrow">
+        <h2>Observations</h2>
+        <p>
+          Digital-twin-based simulation provides a scalable way to generate task demonstrations, but robust real-world deployment
+          remains challenging. We observed limitations from the current VLA policy capability, visual and physical sim-to-real
+          discrepancies, and joint-level error accumulation in the LeRobot execution pipeline.
+        </p>
+      </div>
     </section>
 
-    <section class="section citation">
-      <h2>Citation</h2>
-      <pre><code>@misc{recon2act2026,
-  title  = {Recon2Act: Digital-Twin-Based Sim-to-Real VLA Training},
-  author = {Lee, Chanwoo and Jeong, Seungheon and Yang, Jeoungwoo},
-  year   = {2026},
-  url    = {https://github.com/c0zyb1ue/Recon2Act}
-}</code></pre>
+    <section class="section">
+      <div class="container narrow">
+        <h2>Acknowledgements</h2>
+        <p>
+          This project builds on the LeIsaac and LeRobot ecosystems for IsaacLab-based simulation, dataset collection, policy
+          training, and robot deployment.
+        </p>
+      </div>
     </section>
   </main>
 
   <footer>
-    <p>Recon2Act · UNIST AIGS · Built with LeIsaac, LeRobot, Isaac Sim, VGGT, COLMAP, MiLO, and pi0.5 VLA.</p>
+    <div class="container narrow">
+      <p>Website style inspired by the Nerfies/LangSplat-style academic project page template.</p>
+    </div>
   </footer>
 </body>
 </html>
