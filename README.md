@@ -14,7 +14,7 @@ The goal of this project is to reduce the gap between simulation-based VLA train
 Instead of training in a generic simulation scene, we first reconstruct the target real workspace and use the reconstructed scene as a digital twin for simulation-based data generation.
 
 <p align="center">
-  <img src="assets/fig1.png" width="100%">
+  <img src="docs/assets/fig1.png" width="100%">
 </p>
 
 The overall pipeline consists of:
@@ -65,10 +65,10 @@ The policy uses both **front camera** and **wrist camera** observations.
 
 If GitHub does not render the videos directly in the table, use the links below:
 
-* [Real front camera](assets/real_front.mp4)
-* [Real wrist camera](assets/real_wrist.mp4)
-* [Simulation front camera](assets/sim_front.mp4)
-* [Simulation wrist camera](assets/sim_wrist.mp4)
+* [Real front camera](docs/assets/real_front.mp4)
+* [Real wrist camera](docs/assets/real_wrist.mp4)
+* [Simulation front camera](docs/assets/sim_front.mp4)
+* [Simulation wrist camera](docs/assets/sim_wrist.mp4)
 
 ---
 
