@@ -1,4 +1,4 @@
-# Recon2Act: Digital-Twin-Based Sim-to-Real VLA Training
+# Recon2Act:  3D Reconstruction for Sim-to-Real VLA Learning
 
 **Recon2Act** is a real-to-sim-to-real robotics pipeline for adapting vision-language-action (VLA) policies to a target manipulation workspace.
 The project reconstructs a real tabletop scene into a simulation-ready digital twin, generates robot demonstrations in Isaac Sim, fine-tunes a VLA policy, and evaluates the trained policy in both simulation and the real world.
