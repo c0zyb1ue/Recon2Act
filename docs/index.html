@@ -4,22 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Recon2Act: Digital-Twin-Based Sim-to-Real VLA Training">
-  <title>Recon2Act: Digital-Twin-Based Sim-to-Real VLA Training</title>
+  <title>Recon2ACT: 3D Reconstruction for Sim-to-Real VLA Learning</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="hero">
     <div class="container narrow">
-      <p class="venue">Sim-to-Real VLA Project</p>
-      <h1>Recon2Act: Digital-Twin-Based<br>Sim-to-Real VLA Training</h1>
-      <p class="subtitle">From real scene reconstruction to simulation-based VLA fine-tuning and real-world deployment</p>
+      <p class="venue">Deep Learning for 3D Vision Project</p>
+      <h1>Recon2Act: 3D Reconstruction <br> for Sim-to-Real VLA Learning</h1>
+      <p class="subtitle">From 3D scene reconstruction to simulation-based Vision Language Action fine-tuning and real-world deployment</p>
 
       <div class="authors">
-        <span>Seungheon Jeong</span>
         <span>Chanwoo Lee</span>
+        <span>Seungheon Jeong</span>
         <span>Jeoungwoo Yang</span>
       </div>
-      <div class="affiliation">UNIST AIGS · 3D Vision & Robotics Lab</div>
+      <div class="affiliation">UNIST AIGS | 3D Vision & Robotics Lab</div>
 
       <div class="links">
         <a href="https://github.com/c0zyb1ue/Recon2Act" target="_blank" rel="noreferrer">Code</a>
@@ -32,9 +32,9 @@
   <main>
     <section class="section teaser">
       <div class="container">
-        <img src="assets/fig1.png" alt="Overview of the Recon2Act sim-to-real VLA training pipeline" class="figure-main">
+        <img src="/docs/assets/fig1.png" alt="Overview of the Recon2Act sim-to-real VLA training pipeline" class="figure-main">
         <p class="caption">
-          Recon2Act captures a real tabletop workspace, reconstructs it with VGGT and COLMAP, refines the scene with MiLO,
+          Recon2Act captures a real tabletop workspace, reconstructs it with VGGT COLMAP, refines the scene with MiLO,
           imports the digital twin into Isaac Sim, and fine-tunes a pi0.5-based VLA policy for real-world deployment.
         </p>
       </div>
@@ -47,7 +47,7 @@
           Vision-language-action (VLA) models are promising for general-purpose robot manipulation, but adapting them to a
           specific real-world workspace remains difficult due to the cost of real demonstration collection and the persistent
           sim-to-real gap. We study a real-to-sim-to-real pipeline for fine-tuning a pi0.5-based VLA policy using a reconstructed
-          digital twin. A tabletop manipulation scene is captured from multiple viewpoints, reconstructed with VGGT and COLMAP,
+          digital twin. A tabletop manipulation scene is captured from multiple viewpoints, reconstructed with VGGT COLMAP,
           refined with MiLO, imported into Isaac Sim, and used to generate simulated demonstrations. The resulting policy is
           evaluated in simulation and deployed on the real robot, revealing both the potential of digital-twin-based VLA training
           and the remaining challenges in real-world transfer.
