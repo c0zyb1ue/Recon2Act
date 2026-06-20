@@ -1,157 +1,170 @@
-# LeIsaac
+# Recon2Act:  3D Reconstruction for Sim-to-Real VLA Learning
+
+**Recon2Act** is a real-to-sim-to-real robotics pipeline for adapting vision-language-action (VLA) policies to a target manipulation workspace.
+The project reconstructs a real tabletop scene into a simulation-ready digital twin, generates robot demonstrations in Isaac Sim, fine-tunes a VLA policy, and evaluates the trained policy in both simulation and the real world.
+
+This project is built on top of the **LeIsaac** workflow, which provides IsaacLab-based teleoperation, data collection, conversion to the LeRobot Dataset format, and policy training/deployment utilities.
+
+---
+
+## Overview
+
+The goal of this project is to reduce the gap between simulation-based VLA training and real-world robot deployment.
+
+Instead of training in a generic simulation scene, we first reconstruct the target real workspace and use the reconstructed scene as a digital twin for simulation-based data generation.
 
 <p align="center">
-  <img src="docs/static/img/logo.png" alt="LeIsaac logo" width="120" />
+  <img src="assets/fig1.png" width="100%">
 </p>
 
-<p align="center">
-  <a href="https://lightwheelai.github.io/leisaac/">Documentation</a> |
-  <a href="https://lightwheelai.github.io/leisaac/docs/getting_started/installation">Installation</a> |
-  <a href="https://lightwheelai.github.io/leisaac/docs/getting_started/teleoperation">Teleoperation</a> |
-  <a href="https://lightwheelai.github.io/leisaac/resources/available_env">Environments</a> |
-  <a href="https://github.com/LightwheelAI/leisaac">Original Repository</a>
-</p>
+The overall pipeline consists of:
 
-LeIsaac provides teleoperation and imitation-learning workflows in
-[IsaacLab](https://isaac-sim.github.io/IsaacLab/main/index.html) for
-[LeRobot](https://github.com/huggingface/lerobot)-style robots. It supports
-simulation teleoperation, data collection, dataset conversion, scripted data
-generation, policy training, and policy evaluation.
+1. **Real Scene Capture**
+   Capture the target tabletop workspace from multiple camera viewpoints.
 
-https://github.com/user-attachments/assets/763acf27-d9a9-4163-8651-3ba0a6a185d7
+2. **3D Reconstruction**
+   Reconstruct the scene geometry using **VGGT** and **COLMAP**.
 
-## What LeIsaac Provides
+3. **Scene Refinement**
+   Refine the reconstructed representation using **MiLO** and generate PLY / 3DGS / mesh assets.
 
-- IsaacLab environments for SO101 Follower, Bi-Arm SO101 Follower, LeKiwi, and related LeRobot robots.
-- Teleoperation with SO101 Leader, Bi-SO101 Leader, keyboard, gamepad, and remote ZMQ-based control.
-- Recording pipelines for HDF5 and LeRobot Dataset formats.
-- State-machine data generation for programmatic trajectory collection.
-- Policy inference support for GR00T N1.5, GR00T N1.6, LeRobot policies, and OpenPI.
-- GitHub Pages documentation powered by Docusaurus: https://lightwheelai.github.io/leisaac/
+4. **Digital Twin in Isaac Sim**
+   Import the reconstructed scene into Isaac Sim and align the robot, table, objects, and camera views.
 
-## Visual Overview
+5. **VLA Fine-tuning and Deployment**
+   Generate simulated demonstrations, fine-tune a `pi0.5`-based VLA policy, and deploy the trained policy in the real workspace.
 
-| Custom task simulation | Custom scene asset | Teleoperation target frame |
-| :---: | :---: | :---: |
-| <img src="docs/static/img/tutorials/custom_task_sim.png" alt="SO101 custom task simulation" width="320" /> | <img src="docs/static/img/tutorials/custom_scene_usd.png" alt="Custom Isaac Sim scene" width="320" /> | <img src="docs/static/img/devices/teleop_info/target_frame.jpg" alt="Target frame for teleoperation" width="220" /> |
+---
 
-| Single-Arm SO101 | Bi-Arm SO101 | LeKiwi |
-| :---: | :---: | :---: |
-| <img src="docs/static/img/robots/single_arm_so101.png" alt="Single-arm SO101 Follower" width="220" /> | <img src="docs/static/img/robots/bi_arm_so101.png" alt="Bi-arm SO101 Follower" width="220" /> | <img src="docs/static/img/robots/lekiwi.png" alt="LeKiwi robot" width="220" /> |
+## Dataset Visualization
 
-## Task Videos
+We visualize both real-world and simulation-collected LeRobot datasets using the official LeRobot dataset visualizer.
 
-**Pick Orange**
+| Dataset                |    Episode | Link                                                                                                                                               |
+| ---------------------- | ---------: | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real-world orange task |  episode 0 | [Open in LeRobot Visualizer](https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Freal-orange_20260619_235723%2Fepisode_0) |
+| Simulation orange task | episode 11 | [Open in LeRobot Visualizer](https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Forange%2Fepisode_11)                     |
 
-https://github.com/user-attachments/assets/466eddff-f720-4f99-94d5-5e123e4c302c
+---
 
-**Lift Cube**
+## Camera Views
 
-https://github.com/user-attachments/assets/1e4eb83a-0b38-40fb-a0b2-ddb0fe201e6d
+The policy uses both **front camera** and **wrist camera** observations.
 
-**Clean Toy Table**
+### Real-world Dataset
 
-https://github.com/user-attachments/assets/e49d8f1c-dcc9-412b-a88f-100680d8a45b
+| Front Camera                                                      | Wrist Camera                                                      |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| <video src="assets/real_front.mp4" controls width="100%"></video> | <video src="assets/real_wrist.mp4" controls width="100%"></video> |
 
-**Fold Cloth**
+### Simulation Dataset
 
-https://github.com/user-attachments/assets/e29a0f8a-9286-4ce6-b45d-342c3d3ba754
+| Front Camera                                                     | Wrist Camera                                                     |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| <video src="assets/sim_front.mp4" controls width="100%"></video> | <video src="assets/sim_wrist.mp4" controls width="100%"></video> |
 
-**LeKiwi Cleanup Trash**
+If GitHub does not render the videos directly in the table, use the links below:
 
-https://github.com/user-attachments/assets/b95baf5c-861d-4698-ab55-f929b271dab9
+* [Real front camera](assets/real_front.mp4)
+* [Real wrist camera](assets/real_wrist.mp4)
+* [Simulation front camera](assets/sim_front.mp4)
+* [Simulation wrist camera](assets/sim_wrist.mp4)
 
-## Workflow
+---
 
-1. Install LeIsaac and IsaacLab dependencies.
-2. Prepare robot and scene assets under `assets/`.
-3. Run teleoperation or scripted data generation in IsaacLab.
-4. Record data as HDF5 or directly as a LeRobot Dataset.
-5. Convert, train, and evaluate policies in simulation or on hardware.
+## Repository Structure
 
-Start from the documentation:
-
-- [Installation and setup](https://lightwheelai.github.io/leisaac/docs/getting_started/installation)
-- [Teleoperation](https://lightwheelai.github.io/leisaac/docs/getting_started/teleoperation)
-- [Dataset replay](https://lightwheelai.github.io/leisaac/docs/getting_started/dataset_replay)
-- [Policy training and inference](https://lightwheelai.github.io/leisaac/docs/getting_started/policy_support)
-
-## Quick Teleoperation Example
-
-```bash
-python scripts/environments/teleoperation/teleop_se3_agent.py \
-    --task=LeIsaac-SO101-PickOrange-v0 \
-    --teleop_device=so101leader \
-    --port=/dev/ttyACM0 \
-    --num_envs=1 \
-    --device=cuda \
-    --enable_cameras \
-    --record \
-    --dataset_file=./datasets/dataset.hdf5
+```text
+Recon2Act/
+├── assets/                 # Figures, videos, and README media
+├── docs/                   # Additional documentation
+├── scripts/                # Training, evaluation, and utility scripts
+├── source/leisaac/         # LeIsaac-based simulation and data pipeline
+├── tools/                  # Reconstruction / conversion tools
+├── *.usd                   # Isaac Sim scene and robot assets
+├── train.sh                # Training entry script
+├── eval.sh                 # Real-world evaluation script
+├── eval_simul.sh           # Simulation evaluation script
+└── README.md
 ```
 
-More examples are available in the
-[teleoperation guide](https://lightwheelai.github.io/leisaac/docs/getting_started/teleoperation).
+---
 
-## Supported Resources
+## Method
 
-| Resource | Link |
-| :--- | :--- |
-| Robots | [Available Robots](https://lightwheelai.github.io/leisaac/resources/available_robots) |
-| Environments | [Available Environments](https://lightwheelai.github.io/leisaac/resources/available_env) |
-| Devices | [Available Devices](https://lightwheelai.github.io/leisaac/resources/available_devices) |
-| Policies | [Available Policy Inference](https://lightwheelai.github.io/leisaac/resources/available_policy) |
-| Extra features | [Digital twin, MimicGen, EnvHub, LeRobot recorder, state-machine generation](https://lightwheelai.github.io/leisaac/docs/features) |
+### 1. Real Scene Capture
 
-## News
+We construct a tabletop manipulation workspace and capture multi-view RGB images.
+The workspace contains a robot arm, a table, target objects, and background structures such as wall panels.
 
-- [2026-04-14] Remote teleoperation is now available in LeIsaac. Try it in the [teleoperation guide](https://lightwheelai.github.io/leisaac/docs/getting_started/teleoperation#remote-teleoperation).
-- [2026-03-10] The new `datagen` module can generate motion trajectories programmatically. See [State Machine Data Generation](https://lightwheelai.github.io/leisaac/docs/features/state_machine).
-- [2026-01-16] Added inference support for GR00T N1.6. Details are in [Available Policy Inference](https://lightwheelai.github.io/leisaac/resources/available_policy#finetuned-gr00t-n16).
-- [2026-01-13] Try [LeIsaac x Cosmos](https://lightwheelai.github.io/leisaac/docs/tutorials/cosmos_tutorial) for a video-to-action data generation pipeline.
-- [2026-01-12] [LeRobot recorder integration](https://lightwheelai.github.io/leisaac/docs/features/lerobot_recorder) can record data directly in LeRobot Dataset format during teleoperation.
-- [2025-12-19] [LeIsaac x Marble](https://lightwheelai.github.io/leisaac/docs/tutorials/marble_tutorial) supports building and evaluating diverse embodied tasks across large-scale generalized environments.
-- [2025-12-19] LeKiwi-based teleoperation and a Loft scene are available. See [Available Environments](https://lightwheelai.github.io/leisaac/resources/available_env).
-- [2025-11-27] More teleoperation devices are supported, including enhanced keyboard and gamepad control. See [Available Devices](https://lightwheelai.github.io/leisaac/resources/available_devices).
-- [2025-11-26] LeIsaac is the official imitation-learning simulation playground integrated into LeRobot EnvHub. See [LeIsaac x LeRobot EnvHub](https://huggingface.co/docs/lerobot/en/envhub_leisaac).
+### 2. 3D Scene Reconstruction
 
-## Community
+The captured images are processed with VGGT and COLMAP to estimate camera poses and reconstruct the scene geometry.
 
-Welcome to the Lightwheel open-source community. For questions or collaboration,
-contact [Zeyu](mailto:zeyu.hu@lightwheel.ai) or
-[Yinghao](mailto:yinghao.shuai@lightwheel.ai).
+The output includes:
 
-## Contributing
+* Camera poses
+* Sparse / dense point cloud
+* PLY assets
+* Initial scene geometry
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for how to report issues and submit pull requests.
+### 3. MiLO-Based Refinement
 
-## Citation
+The reconstructed scene is refined using MiLO to obtain cleaner geometry and mesh-like representations suitable for simulation.
 
-If you use LeIsaac, please cite it as follows.
+The refined outputs are used to build a digital twin of the real workspace.
 
-```txt
-@software{Lightwheel_and_LeIsaac_Project_Developers_LeIsaac_2025,
-author = {{Lightwheel} and {LeIsaac Project Developers}},
-license = {Apache-2.0},
-month = dec,
-title = {{LeIsaac}},
-url = {https://github.com/LightwheelAI/leisaac},
-version = {0.4.0},
-year = {2026}
-}
-```
+### 4. Isaac Sim Digital Twin
 
-## Acknowledgements
+The reconstructed scene is imported into Isaac Sim.
+The robot, table, object poses, camera views, and workspace geometry are aligned with the real-world setup.
 
-We gratefully acknowledge [IsaacLab](https://github.com/isaac-sim/IsaacLab) and
-[LeRobot](https://github.com/huggingface/lerobot) for their excellent work, from
-which LeIsaac borrows some code.
+This simulation environment is used to generate demonstration data for policy learning.
 
-## Join Our Team
+### 5. VLA Fine-tuning
 
-Lightwheel AI is looking for people interested in robotics engineering, AI/ML
-research, robotics software, and applied research.
+We fine-tune a `pi0.5`-based VLA policy using simulated demonstrations collected in the reconstructed digital twin.
 
-[Apply](https://lightwheel.ai/career) |
-[Contact](mailto:zeyu.hu@lightwheel.ai) |
-[Learn more](https://lightwheel.ai)
+The policy receives:
+
+* Front camera image
+* Wrist camera image
+* Language instruction
+
+and predicts robot actions for the manipulation task.
+
+### 6. Real-World Deployment
+
+Finally, the fine-tuned policy is deployed in the real tabletop workspace.
+We compare simulation behavior and real-world execution to analyze the remaining sim-to-real gap.
+
+---
+
+## Observations
+
+Simulation training in the reconstructed digital twin provides a practical way to generate task demonstrations without repeatedly collecting real robot data.
+
+However, real-world deployment remains challenging. We observed several failure factors:
+
+* Remaining visual and physical sim-to-real gap
+* Limited generalization capability of the current `pi0.5` VLA policy
+* Joint-level error accumulation in the LeRobot execution pipeline
+* Sensitivity to camera viewpoint, object pose, and robot calibration mismatch
+
+These results suggest that digital-twin-based VLA fine-tuning is promising, but robust real-world deployment still requires better calibration, improved controller accuracy, and stronger policy adaptation.
+
+---
+
+## Acknowledgement
+
+This project is built upon the **LeIsaac** framework and the **LeRobot** ecosystem.
+We use LeIsaac-style IsaacLab simulation, LeRobot dataset formatting, and camera-based robot policy training utilities as the base of our sim-to-real VLA pipeline.
+
+---
+
+## Project Page
+
+* GitHub: https://github.com/c0zyb1ue/Recon2Act
+* Real dataset visualization: https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Freal-orange_20260619_235723%2Fepisode_0
+* Simulation dataset visualization: https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2Fseunghoney%2Forange%2Fepisode_11
+
