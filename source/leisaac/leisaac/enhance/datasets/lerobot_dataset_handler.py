@@ -76,13 +76,27 @@ class LeRobotDatasetHandler(DatasetFileHandlerBase):
         self._lerobot_dataset.add_frame(frame=frame)
 
     def flush(self):
+        if not self.has_episode_buffer():
+            return False
         self._lerobot_dataset.save_episode(parallel_encoding=False)
+        return True
 
     def clear(self):
+        if not self.has_episode_buffer():
+            return False
         self._lerobot_dataset.clear_episode_buffer()
+        return True
 
     def finalize(self):
         self._lerobot_dataset.finalize()
+
+    def has_episode_buffer(self) -> bool:
+        episode_buffer = getattr(self._lerobot_dataset, "episode_buffer", None)
+        if isinstance(episode_buffer, dict):
+            return episode_buffer.get("size", 0) > 0
+        if episode_buffer is not None:
+            return True
+        return bool(getattr(self._lerobot_dataset, "buffer", []))
 
     def close(self):
         if self._lerobot_dataset is not None:
@@ -97,7 +111,28 @@ class LeRobotDatasetHandler(DatasetFileHandlerBase):
         raise NotImplementedError("load_episode is not supported for LeRobotDatasetHandler")
 
     def get_num_episodes(self) -> int:
-        raise NotImplementedError("get_num_episodes is not supported for LeRobotDatasetHandler")
+        if self._lerobot_dataset is None:
+            return 0
+
+        num_episodes = getattr(self._lerobot_dataset, "num_episodes", None)
+        if num_episodes is not None:
+            return int(num_episodes() if callable(num_episodes) else num_episodes)
+
+        metadata = getattr(self._lerobot_dataset, "meta", None)
+        if metadata is not None:
+            total_episodes = getattr(metadata, "total_episodes", None)
+            if total_episodes is not None:
+                return int(total_episodes() if callable(total_episodes) else total_episodes)
+
+        info = getattr(self._lerobot_dataset, "info", None)
+        if isinstance(info, dict) and "total_episodes" in info:
+            return int(info["total_episodes"])
+
+        episode_data_index = getattr(self._lerobot_dataset, "episode_data_index", None)
+        if episode_data_index is not None and "from" in episode_data_index:
+            return len(episode_data_index["from"])
+
+        return self._demo_count
 
 
 # Create a simple fallback recorder if LeRobot is missing
@@ -107,6 +142,7 @@ class GenericDataRecorder:
         self.fps = fps
         self.features = features
         self.buffer = []
+        self._demo_count = 0
 
     def add_frame(self, frame):
         # Just store in memory or append to a list
@@ -119,9 +155,13 @@ class GenericDataRecorder:
         with open(f"{self.repo_id}_episode.pkl", "wb") as f:
             pickle.dump(self.buffer, f)
         self.buffer = []
+        self._demo_count += 1
 
     def finalize(self):
         print("Dataset finalized.")
+
+    def get_num_episodes(self) -> int:
+        return self._demo_count
 
     def load_from_disk(self, path):
         # Implementation to load your custom .npz or .json files

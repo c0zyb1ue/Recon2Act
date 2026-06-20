@@ -295,18 +295,21 @@ def main():  # noqa: C901
 
     # add teleoperation key for env reset
     should_reset_recording_instance = False
+    should_prepare_manual_reset = False
 
     def reset_recording_instance():
-        nonlocal should_reset_recording_instance
+        nonlocal should_prepare_manual_reset, should_reset_recording_instance
         should_reset_recording_instance = True
+        should_prepare_manual_reset = True
 
     # add teleoperation key for task success
     should_reset_task_success = False
 
     def reset_task_success():
-        nonlocal should_reset_task_success
+        nonlocal should_prepare_manual_reset, should_reset_recording_instance, should_reset_task_success
         should_reset_task_success = True
-        reset_recording_instance()
+        should_reset_recording_instance = True
+        should_prepare_manual_reset = False
 
     teleop_interface.add_callback("R", reset_recording_instance)
     teleop_interface.add_callback("N", reset_task_success)
@@ -351,8 +354,13 @@ def main():  # noqa: C901
                     if args_cli.record:
                         manual_terminate(env, True)
                 if should_reset_recording_instance:
+                    if should_prepare_manual_reset:
+                        prepare_for_manual_reset = getattr(env.cfg, "prepare_for_manual_reset", None)
+                        if callable(prepare_for_manual_reset):
+                            prepare_for_manual_reset(env)
                     env.reset()
                     should_reset_recording_instance = False
+                    should_prepare_manual_reset = False
                     if start_record_state:
                         if args_cli.record:
                             print("Stop Recording!!!")
@@ -369,14 +377,9 @@ def main():  # noqa: C901
                             env.recorder_manager.exported_successful_episode_count + resume_recorded_demo_count
                         )
                         print(f"Recorded {current_recorded_demo_count} successful demonstrations.")
-                    if (
-                        args_cli.record
-                        and args_cli.num_demos > 0
-                        and env.recorder_manager.exported_successful_episode_count + resume_recorded_demo_count
-                        >= args_cli.num_demos
-                    ):
-                        print(f"All {args_cli.num_demos} demonstrations recorded. Exiting the app.")
-                        break
+                        if args_cli.num_demos > 0 and current_recorded_demo_count >= args_cli.num_demos:
+                            print(f"All {args_cli.num_demos} demonstrations recorded. Exiting the app.")
+                            break
 
                 elif actions is None:
                     env.render()

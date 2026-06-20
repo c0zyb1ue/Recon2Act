@@ -1,0 +1,14 @@
+lerobot-record \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM1 \
+    --robot.id=meta_follower_arm \
+    --robot.cameras="{ front: {type: opencv, index_or_path: /dev/video10, width: 640, height: 480, fps: 30}, side: {type: opencv, index_or_path: /dev/video4, width: 640, height: 480, fps: 30}}" \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/ttyACM0 \
+    --teleop.id=meta_leader_arm \
+    --display_data=true \
+    --dataset.repo_id=seunghoney/real-orange \
+    --dataset.num_episodes=30 \
+    --dataset.single_task="Pick the orange from the desk and put them into the plate" \
+    --dataset.streaming_encoding=true \
+    --dataset.encoder_threads=2

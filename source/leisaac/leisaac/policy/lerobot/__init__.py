@@ -20,7 +20,9 @@ def create_module_hierarchy(path: str):
                 setattr(sys.modules[parent_path], parts[i - 1], mod)
 
 
-helpers_path = "lerobot.scripts.server.helpers"
+# Match the module path used by LeRobot's current async inference server so
+# pickle resolves these compatibility classes to the server-side definitions.
+helpers_path = "lerobot.async_inference.helpers"
 create_module_hierarchy(helpers_path)
 
 fake_lerobot_module = sys.modules[helpers_path]
