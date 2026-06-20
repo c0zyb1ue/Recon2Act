@@ -55,13 +55,13 @@ The policy uses both **front camera** and **wrist camera** observations.
 
 | Front Camera                                                      | Wrist Camera                                                      |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| <video src="assets/real_front.mp4" controls width="100%"></video> | <video src="assets/real_wrist.mp4" controls width="100%"></video> |
+| <video src="docs/assets/real_front.mp4" controls width="100%"></video> | <video src="docs/assets/real_wrist.mp4" controls width="100%"></video> |
 
 ### Simulation Dataset
 
 | Front Camera                                                     | Wrist Camera                                                     |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
-| <video src="assets/sim_front.mp4" controls width="100%"></video> | <video src="assets/sim_wrist.mp4" controls width="100%"></video> |
+| <video src="docs/assets/sim_front.mp4" controls width="100%"></video> | <video src="docs/assets/sim_wrist.mp4" controls width="100%"></video> |
 
 If GitHub does not render the videos directly in the table, use the links below:
 
